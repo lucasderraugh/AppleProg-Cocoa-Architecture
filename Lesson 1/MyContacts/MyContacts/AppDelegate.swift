@@ -13,14 +13,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     let mainWindowController = MainWindowController()
 
-    func applicationDidFinishLaunching(aNotification: NSNotification) {
+    func applicationDidFinishLaunching(_ aNotification: Notification) {
         mainWindowController.showWindow(nil)
     }
-
-    func applicationWillTerminate(aNotification: NSNotification) {
-        // Insert code here to tear down your application
-    }
-
-
 }
 

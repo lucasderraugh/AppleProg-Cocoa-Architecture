@@ -10,29 +10,34 @@ import Cocoa
 import Contacts
 import ContactsUI
 
-class ContactsListViewController: NSViewController {
+final class ContactsListViewController: NSViewController {
 
     @IBOutlet weak var tableView: NSTableView!
-    var didSelectContact: (CNContact? -> Void)?
+    var didSelectContact: (CNContact) -> Void = { _ in }
+    
+    convenience init(didSelectContact: @escaping (CNContact) -> Void) {
+        self.init()
+        self.didSelectContact = didSelectContact
+    }
     
     let contacts: [CNContact] = {
         let store = CNContactStore()
         let keysToFetch = [CNContactViewController.descriptorForRequiredKeys()]
-        let containers = (try? store.containersMatchingPredicate(nil)) ?? []
+        let containers = (try? store.containers(matching: nil)) ?? []
         var results: [CNContact] = []
         
         for container in containers {
-            let predicate = CNContact.predicateForContactsInContainerWithIdentifier(container.identifier)
+            let predicate = CNContact.predicateForContactsInContainer(withIdentifier: container.identifier)
             do {
-                let containerResults = try store.unifiedContactsMatchingPredicate(predicate, keysToFetch: keysToFetch)
-                results.appendContentsOf(containerResults.filter { $0.contactType == .Person })
+                let containerResults = try store.unifiedContacts(matching: predicate, keysToFetch: keysToFetch)
+                results.append(contentsOf: containerResults.filter { $0.contactType == .person })
             } catch let error {
                 print("Error with container: \(error)")
             }
         }
-        results.sortInPlace {
-            let comparator = CNContact.comparatorForNameSortOrder(.UserDefault)
-            return comparator($0, $1) == .OrderedAscending
+        results.sort {
+            let comparator = CNContact.comparator(forNameSortOrder: .userDefault)
+            return comparator($0, $1) == .orderedAscending
         }
         return results
     }()
@@ -40,19 +45,21 @@ class ContactsListViewController: NSViewController {
 
 extension ContactsListViewController: NSTableViewDataSource, NSTableViewDelegate {
     
-    func numberOfRowsInTableView(tableView: NSTableView) -> Int {
+    func numberOfRows(in tableView: NSTableView) -> Int {
         return contacts.count
     }
     
-    func tableView(tableView: NSTableView, viewForTableColumn tableColumn: NSTableColumn?, row: Int) -> NSView? {
-        let cell = tableView.makeViewWithIdentifier("Cell", owner: self) as! NSTableCellView
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+        let cell = tableView.makeView(withIdentifier: NSUserInterfaceItemIdentifier(rawValue: "Cell"), owner: self) as! NSTableCellView
         let contact = contacts[row]
-        cell.textField?.stringValue = CNContactFormatter.stringFromContact(contact, style: .FullName) ?? ""
+        cell.textField?.stringValue = CNContactFormatter.string(from: contact, style: .fullName) ?? ""
         return cell
     }
     
-    func tableViewSelectionDidChange(notification: NSNotification) {
+    func tableViewSelectionDidChange(_ notification: Notification) {
         let contact: CNContact? = tableView.selectedRow == -1 ? nil : contacts[tableView.selectedRow]
-        didSelectContact?(contact)
+        if let contact = contact {
+            didSelectContact(contact)
+        }
     }
 }

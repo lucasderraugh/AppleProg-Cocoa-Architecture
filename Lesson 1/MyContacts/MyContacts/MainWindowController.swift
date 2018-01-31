@@ -12,14 +12,14 @@ import ContactsUI
 class MainWindowController: NSWindowController {
     
     convenience init() {
-        self.init(windowNibName: "MainWindowController")
+        self.init(windowNibName: NSNib.Name(rawValue: "MainWindowController"))
     }
 
     override func windowDidLoad() {
         super.windowDidLoad()
 
         window?.titlebarAppearsTransparent = true
-        window?.titleVisibility = .Hidden
+        window?.titleVisibility = .hidden
         
         let splitVC = NSSplitViewController()
         let contactVC = CNContactViewController()
@@ -30,5 +30,4 @@ class MainWindowController: NSWindowController {
         
         window?.contentViewController = splitVC
     }
-    
 }
